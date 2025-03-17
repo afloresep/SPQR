@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spiq_project"
+version = "0.1.0"
+description = "Streaming Product Quantization pipeline for large-scale clustering of molecular data."
+authors = [
+  { name = "Alejandro Flores", email = "afloresep01@gmail.com" }
+]
+dependencies = [
+  "numpy"
+  "pandas"
+  "RDKit"
+]

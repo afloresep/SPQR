@@ -1,7 +1,7 @@
 import logging
 import os
 
-def process_input(input_paths):
+def _process_input(input_paths):
     """
     Method to deal with input paths for files and folders. 
     Yields files if tuple or list of paths are provided

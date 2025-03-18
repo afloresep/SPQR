@@ -1,0 +1,4 @@
+pandas
+rdkit
+scikit-learn
+tqdm

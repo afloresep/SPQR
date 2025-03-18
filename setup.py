@@ -10,7 +10,9 @@ setup(
     install_requires=[
         "numpy",
         "Rdkit", 
-        "pandas"
+        "pandas", 
+        "tqmd", 
+        "scikit-learn"
     ],
     entry_points={
         "console_scripts": [

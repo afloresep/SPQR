@@ -17,7 +17,7 @@ def test_parse_input_with_chunksize(tmp_path: Path):
     # Expected chunks: [first two lines], [next two lines], [last line]
     result = list(streamer.parse_input(str(file_path), chunksize))
     assert result == [file_content[:2], file_content[2:4], file_content[4:]]
-    
+ 
 def test_parse_input_without_chunksize(tmp_path: Path):
     # Test when chunksize is None: the entire file should be returned as one chunk.
     file_content = ["line1\n", "line2\n", "line3\n"]

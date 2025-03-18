@@ -10,7 +10,8 @@ authors = [
   { name = "Alejandro Flores", email = "afloresep01@gmail.com" }
 ]
 dependencies = [
-  "numpy"
-  "pandas"
-  "RDKit"
-]
+  "numpy",
+  "pandas", 
+  "RDKit",
+  "tqdm", 
+  "scikit-learn" ]

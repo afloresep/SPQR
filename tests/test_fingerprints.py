@@ -64,7 +64,7 @@ def test_fingerprint_calculator_valid(fp_params):
     """
     calculator = FingerprintCalculator()
     smiles_list = ["CCO", "C1CCCCC1", "O=C=O"]
-    fingerprints = calculator.FingerprintFromSmiles(smiles_list, 'morgan', **fp_params)
+    fingerprints = calculator.FingerprintFromSmiles(smiles_list, 'morgan', nprocesses=1,**fp_params)
     
     assert isinstance(fingerprints, np.ndarray)
     assert fingerprints.shape == (len(smiles_list), fp_params['fpSize'])
@@ -78,4 +78,4 @@ def test_fingerprint_calculator_invalid_fp(fp_params):
     calculator = FingerprintCalculator()
     smiles_list = ["CCO", "C1CCCCC1"]
     with pytest.raises(ValueError):
-        calculator.FingerprintFromSmiles(smiles_list, 'unsupported', **fp_params)
+        calculator.FingerprintFromSmiles(smiles_list, 'unsupported', nprocesses=1, **fp_params)

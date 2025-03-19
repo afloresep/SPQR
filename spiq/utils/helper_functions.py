@@ -1,5 +1,7 @@
 import logging
 import os
+import numpy as np
+import pandas as pd
 
 def _process_input(input_paths):
     """
@@ -45,3 +47,39 @@ def format_time(seconds):
     hours, rem = divmod(seconds, 3600)
     minutes, seconds = divmod(rem, 60)
     return f"{int(hours)} h; {int(minutes)}min; {seconds:.2f} s" 
+
+def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
+                  file_format: str = 'npy', **kwargs) -> str:
+    """
+    Save a chunk of fingerprint data to a file in the specified format.
+
+    Parameters:
+        fp_chunk (np.ndarray): The fingerprint array chunk (each row corresponds to a fingerprint).
+        output_dir (str): Directory path where the fingerprint chunk will be saved.
+        chunk_index (int): The index number for the current chunk. This is used to generate a unique file name.
+        file_format (str): Format to save the data. Options are:
+                           - 'npy': Save as a NumPy binary file.
+                           - 'parquet': Save as an Apache Parquet file.
+                           Default is 'npy'.
+        **kwargs: Additional keyword arguments to pass to the saving function.
+                  For 'npy', kwargs are passed to `np.save`.
+                  For 'parquet', kwargs are passed to `DataFrame.to_parquet`.
+
+    Returns:
+        str: The full path of the saved file.
+    """
+    # Ensure the output directory exists.
+    os.makedirs(output_dir, exist_ok=True)
+    
+    if file_format.lower() == 'npy':
+        filename = os.path.join(output_dir, f"fingerprints_chunk_{chunk_index:04d}.npy")
+        np.save(filename, fp_chunk, **kwargs)
+    elif file_format.lower() == 'parquet':
+        filename = os.path.join(output_dir, f"fingerprints_chunk_{chunk_index:04d}.parquet")
+        # Each row is a fingerprint and each column is a bit.
+        df = pd.DataFrame(fp_chunk)
+        df.to_parquet(filename, **kwargs)
+    else:
+        raise ValueError("Unsupported file format. Please choose 'npy' or 'parquet'.")
+    
+    return filename

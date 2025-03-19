@@ -61,7 +61,7 @@ class FingerprintCalculator:
             'morgan': _calculate_morgan_fp,
         }
 
-    def FingerprintFromSmiles(self, smiles:List, fp:str, **params) -> npt.NDArray:
+    def FingerprintFromSmiles(self, smiles:List, fp:str, nprocesses:int = os.cpu_count(), **params) -> npt.NDArray:
         """
         Generate fingerprints for a list of SMILES strings in parallel.
 
@@ -72,6 +72,7 @@ class FingerprintCalculator:
         Args:
             smiles_list (list): A list of SMILES strings.
             fp (str): The fingerprint type to compute (e.g., 'morgan').
+            nprocesses (int): Number of processes for multithreaded fingerprint calculation.  Default to cpu cores 
             **params: Additional keyword parameters for the fingerprint function.
                 For 'morgan', required keys are:
                     - fpSize (int): Number of bits in the fingerprint.

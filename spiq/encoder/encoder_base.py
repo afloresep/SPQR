@@ -1,9 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Optional, Iterable, Iterator, Any, List, Callable
+from typing import Optional
 from sklearn.base import BaseEstimator
-from tqdm import tqdm
-from spiq.streamer.data_streamer import DataStreamer
 
 class PQEncoderBase(BaseEstimator, ABC):
     @abstractmethod
@@ -20,5 +18,3 @@ class PQEncoderBase(BaseEstimator, ABC):
     def inverse_transform(self, X: np.ndarray, binary: bool = False) -> np.ndarray:
         """Reconstruct the original vectors from PQ codes."""
         pass
-
-    DataStreamer._process_chunk()

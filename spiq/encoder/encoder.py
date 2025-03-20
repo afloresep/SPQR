@@ -32,6 +32,7 @@ class PQEncoder(PQEncoderBase):
         self.encoder_is_trained = False
         self.codebook = None # The codebook is defined as the Cartesian product of all centroids
         self.codebook_dtype =  np.uint8 if self.k <= 2**8 else (np.uint16 if self.k<= 2**16 else np.uint32)
+        self.pq_trained = None
 
         """ The codebook is defined as the Cartesian product of all centroids. 
         Storing the codebook C explicitly is not efficient, the full codebook would be (k')^m  centroids
@@ -40,7 +41,7 @@ class PQEncoder(PQEncoderBase):
         """
 
         
-    def fit(self, X_train:np.array)->None:
+    def fit(self, X_train:np.array, **kwargs)->None:
         """ KMeans fitting of every subvector matrix from the X_train matrix. Populates 
         the codebook by storing the cluster centers of every subvector
 
@@ -51,6 +52,7 @@ class PQEncoder(PQEncoderBase):
 
         Args:
            X_train(np.array): Input matrix to train the encoder.  
+           **kwargs: Optional keyword arguments passed to the underlying KMeans `fit()` function.
         """
         
         assert X_train.ndim == 2, "The input can only be a matrix (X.ndim == 2)"
@@ -61,27 +63,55 @@ class PQEncoder(PQEncoderBase):
 
         assert self.encoder_is_trained == False, "Encoder can only be fitted once"
 
-        self.codebook = np.zeros((self.m, self.k, self.D_subvector), dtype=float)
+        self.codebook_cluster_centers = np.zeros((self.m, self.k, self.D_subvector), dtype=float)
         # Divide the input vector into m subvectors 
         for subvector_idx in tqdm(range(self.m), desc='Training PQEncoder'):
             subvector_dim = int(D / self.m) 
             X_train_subvector = X_train[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
             # For every subvector, run KMeans and store the centroids in the codebook 
-            self.pq_trained= KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations).fit(X_train_subvector)
+            self.pq_trained= KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations, **kwargs).fit(X_train_subvector)
 
             # Results for training 1M 1024 dimensional fingerprints were: 5 min 58 s, with k=256, m=4, iterations=200, this is much faster than using scipy
-            self.codebook[subvector_idx] = self.pq_trained.cluster_centers_
+            self.codebook_cluster_centers[subvector_idx] = self.pq_trained.cluster_centers_ # Store the cluster_centers coordinates in the codebook
 
         self.encoder_is_trained = True
+        del X_train # remove initial training data from memory
        
-    def transform(self, X_test):
-        """ Transform vectors into PQ code
+    def transform(self, X:np.array, **kwargs) -> np.array:
+        """
+        Transforms the input matrix X into its PQ-codes.
+
+        For each sample in X, the input vector is split into `m` equal-sized subvectors. 
+        Each subvector is assigned to the nearest cluster centroid
+        and the index of the closest centroid is stored. 
+
+        The result is a compact representation of X, where each sample is encoded as a sequence of centroid indices.
 
         Args:
-            X (_type_): _description_
-        """
-        
+            X (np.ndarray): Input data matrix of shape (n_samples, n_features), 
+                            where n_features must be divisible by the number of subvectors `m`.
+            **kwargs: Optional keyword arguments passed to the underlying KMeans `predict()` function.
 
+        Returns:
+            np.ndarray: PQ codes of shape (n_samples, m), where each element is the index of the nearest centroid 
+                        for the corresponding subvector.
+        """
+        assert self.encoder_is_trained == True, "PQEncoder must be trained before calling transform"
+
+        N, D = X.shape
+        pq_codes = np.zeros((N, self.m), dtype=self.codebook_dtype)
+        for subvector_idx in tqdm(range(self.m), desc='Transforming PQEncoder'):
+            subvector_dim = int(D / self.m) 
+            X_train_subvector = X[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
+            # For every subvector, run KMeans.predict(). Then look in the codebook for the index of the cluster that is closest
+            # Appends the centroid index to the pq_code.  
+            pq_codes[:, subvector_idx] =  self.pq_trained.predict(X_train_subvector, **kwargs)
+
+        # Free memory 
+        del  X
+
+        # Return pq_codes (labels of the centroids for every subvector from the X_test data)
+        return pq_codes
 
     def inverse_transform(self, X_test, binary=False):
         """ Inverse transform. From PQ-code to 

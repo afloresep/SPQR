@@ -19,12 +19,12 @@ def test_fit_successful():
     encoder.fit(X_train)
     
     assert encoder.encoder_is_trained is True, "Encoder should be trained after successful fit."
-    assert encoder.codebook.shape == (m, k, D // m), (
+    assert encoder.codebook_cluster_centers.shape == (m, k, D // m), (
         f"Expected codebook shape to be {(m, k, D//m)}, "
-        f"got {encoder.codebook.shape}"
+        f"got {encoder.codebook_cluster_centers.shape}"
     )
     # Ensure dtype is float per the code
-    assert encoder.codebook.dtype == float, "Codebook dtype should be float."
+    assert encoder.codebook_cluster_centers.dtype == float, "Codebook dtype should be float."
 
 
 def test_fit_raises_assertionerror_for_non2d_input():

@@ -67,12 +67,11 @@ class PQEncoder(PQEncoderBase):
             subvector_dim = int(D / self.m) 
             X_train_subvector = X_train[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
             # For every subvector, run KMeans and store the centroids in the codebook 
+            self.pq_trained= KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations).fit(X_train_subvector)
 
-            # Results for training 1M 1024 dimensional fingerprints were: 5 min 58 s, with k=256, m=4, iterations=200
-            self.codebook[subvector_idx] = KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations).fit(X_train_subvector).cluster_centers_
+            # Results for training 1M 1024 dimensional fingerprints were: 5 min 58 s, with k=256, m=4, iterations=200, this is much faster than using scipy
+            self.codebook[subvector_idx] = self.pq_trained.cluster_centers_
 
-            # Results for training 1M 1024 dimensional fingerprints were: 3 min 32 s, with k=256, m=4, iterations=200  
-            self.codebook[subvector_idx] = KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations).fit(X_train_subvector).cluster_centers_
         self.encoder_is_trained = True
        
     def transform(self, X_test):
@@ -81,7 +80,7 @@ class PQEncoder(PQEncoderBase):
         Args:
             X (_type_): _description_
         """
-        pass
+        
 
 
     def inverse_transform(self, X_test, binary=False):

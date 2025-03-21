@@ -30,7 +30,6 @@ class PQEncoder(PQEncoderBase):
         self.k = k 
         self.iterations = iterations
         self.encoder_is_trained = False
-        self.codebook = None # The codebook is defined as the Cartesian product of all centroids
         self.codebook_dtype =  np.uint8 if self.k <= 2**8 else (np.uint16 if self.k<= 2**16 else np.uint32)
         self.pq_trained = None
 
@@ -60,7 +59,7 @@ class PQEncoder(PQEncoderBase):
         assert self.k < N, "the number of training vectors (N for N,D = X_train.shape) should be more than the number of centroids (K)"
         assert D % self.m == 0, f"Vector (fingeprint) dimension should be divisible by the number of subvectors (m). Got {D} / {self.m}" 
         self.D_subvector = int(D / self.m) # Dimension of the subvector. 
-
+        self.og_D = D # We save the original dimensions of the input vector (fingerprint) for later use
         assert self.encoder_is_trained == False, "Encoder can only be fitted once"
 
         self.codebook_cluster_centers = np.zeros((self.m, self.k, self.D_subvector), dtype=float)
@@ -100,8 +99,10 @@ class PQEncoder(PQEncoderBase):
 
         N, D = X.shape
         pq_codes = np.zeros((N, self.m), dtype=self.codebook_dtype)
-        for subvector_idx in tqdm(range(self.m), desc='Transforming PQEncoder'):
-            subvector_dim = int(D / self.m) 
+
+        # If our original vector is 1024 and our m (splits) is 8 then each subvector will be of dim= 1024/8 = 128
+        subvector_dim = int(D / self.m)
+        for subvector_idx in tqdm(range(self.m), desc='Generating PQ-codes'):
             X_train_subvector = X[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
             # For every subvector, run KMeans.predict(). Then look in the codebook for the index of the cluster that is closest
             # Appends the centroid index to the pq_code.  
@@ -113,21 +114,38 @@ class PQEncoder(PQEncoderBase):
         # Return pq_codes (labels of the centroids for every subvector from the X_test data)
         return pq_codes
 
-    def inverse_transform(self, X_test, binary=False):
-        """ Inverse transform. From PQ-code to 
-        original vector. This process is lossy. 
+    def inverse_transform(self, X_codes:np.array, binary=False):
+        """ Inverse transform. From PQ-code to the original vector. 
+        This process is lossy so we don't expect to get the exact same data.
         If binary=True then the vectors will be returned in binary. 
-        This is for the case where our original vectors were binary. 
-        If we don't have binary=True then the returned vectors are probably
-        like: [0.32134, 0.8232, 0.0132, ... 0.1432, 1.19234] so binary True
-        transforms it to 
+        This is useful for the case where our original vectors were binary. 
+        With binary=True then the returned vectors are transformed from 
+        [0.32134, 0.8232, 0.0132, ... 0.1432, 1.19234] to 
         [0, 1, 0, ..., 0, 1]
 
         Args:
-            X (_type_): _description_
+            pq_code: (np.array): Input data of PQ codes to be transformed into the
+            original vectors.
         """
         
-        X_inversed = 0
-        reconstructed_binary = (X_test>= 0.5).astype(int)
-        return reconstructed_binary 
-    
+        # Get shape of the input matrix of PQ codes
+        N, D = X_codes.shape
+
+        # The dimension of the PQ vectors should be the same 
+        # as the number of splits (subvectors) from the original data 
+
+        assert D == (self.m), f"The dimension D of the PQ-codes (N,D) should be the same as the number of the subvectors or splits (m) . Got D = {D} for m = {self.m}"
+        assert D == (self.og_D  / self.D_subvector), f"The dimension D of the PQ-codes (N,D) should be the same as the original vector dimension divided the subvector dimension"
+
+        X_inversed = np.empty((N, D*self.D_subvector), dtype=float)
+        for subvector_idx in range(self.m):
+            X_inversed[:, subvector_idx*self.D_subvector:((subvector_idx+1)*self.D_subvector)] = self.codebook_cluster_centers[subvector_idx][X_codes[:, subvector_idx], :]
+
+        # Free memory
+        del X_codes
+
+        if binary:
+            reconstructed_binary = (X_inversed>= 0.6).astype('int8')
+            return reconstructed_binary 
+
+        return X_inversed 

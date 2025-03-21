@@ -1,13 +1,12 @@
 import os
-import numpy as np
-from typing import Optional, Iterable, Iterator, Any, List, Callable
-from spiq.utils.helper_functions import _process_input, format_time
+from typing import Optional,  Iterator, List
+from spiq.utils.helper_functions import _process_input
 
 class DataStreamer:
     """
     Class for streaming large datasets in manageable chunks.
     """
-    def parse_input(self, input_path:str, chunksize: Optional[int]=None) -> Iterator[List[str]]: 
+    def parse_input(self, input_path:str, chunksize: Optional[int]=None, verbose:int=0) -> Iterator[List[str]]: 
         """
         Reads input data from a file or a directory of files and yields the data in chunks.
 
@@ -22,6 +21,7 @@ class DataStreamer:
             input_path (str): The path to a file or directory containing input files.
             chunksize (Optional[int]): The number of lines to include in each yielded chunk. If None, 
                 the entire file content is yielded as a single chunk.
+            verbose (int): Level of verbosity. Default is 0
 
         Yields:
             List[str]: A list of lines from the input file(s), where the list length will be equal to 
@@ -34,6 +34,8 @@ class DataStreamer:
         buffer = []
         # helper function to get the file path from the provided input(s)  
         for file_path in _process_input(input_paths=input_path):
+            if verbose == 1:
+                print(f"Processing file:", file_path)
             with open(file_path, 'r') as file:               
                 for line in file:
                   buffer.append(line)

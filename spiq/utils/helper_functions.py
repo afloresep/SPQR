@@ -74,12 +74,13 @@ def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
     if file_format.lower() == 'npy':
         filename = os.path.join(output_dir, f"fingerprints_chunk_{chunk_index:04d}.npy")
         np.save(filename, fp_chunk, **kwargs)
+        del fp_chunk
     elif file_format.lower() == 'parquet':
         filename = os.path.join(output_dir, f"fingerprints_chunk_{chunk_index:04d}.parquet")
         # Each row is a fingerprint and each column is a bit.
         df = pd.DataFrame(fp_chunk)
+        del fp_chunk
         df.to_parquet(filename, **kwargs)
+        del df 
     else:
         raise ValueError("Unsupported file format. Please choose 'npy' or 'parquet'.")
-    
-    return filename

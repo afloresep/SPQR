@@ -93,4 +93,7 @@ class FingerprintCalculator:
 
         with Pool(processes=nprocesses) as pool:
             fingerprints = pool.map(part_func, smiles)
+
+        # Free memory
+        del smiles
         return np.array(fingerprints)

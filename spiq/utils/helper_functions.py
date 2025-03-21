@@ -2,6 +2,8 @@ import logging
 import os
 import numpy as np
 import pandas as pd
+from functools import wraps
+
 
 def _process_input(input_paths):
     """
@@ -32,7 +34,6 @@ def _process_input(input_paths):
             yield input_path
         else:
             raise ValueError(f"Invalid input path: {input_path}. Ensure the path exists and is a valid file or directory.")
-
 
 
 def format_time(seconds):
@@ -85,3 +86,15 @@ def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
     else:
         raise ValueError("Unsupported file format. Please choose 'npy' or 'parquet'.")
     return filename
+
+
+def get_time(func): 
+    import time
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"{func.__name__} took {format_time(end-start)}")
+        return result
+    return wrapper

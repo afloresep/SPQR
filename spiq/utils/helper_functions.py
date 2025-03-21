@@ -84,3 +84,4 @@ def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
         del df 
     else:
         raise ValueError("Unsupported file format. Please choose 'npy' or 'parquet'.")
+    return filename

@@ -91,8 +91,12 @@ class FingerprintCalculator:
         # Bind the additional parameters to the selected function.
         part_func = partial(func, **params)
 
-        with Pool(processes=nprocesses) as pool:
-            fingerprints = pool.map(part_func, smiles)
+        try: 
+            with Pool(processes=nprocesses) as pool:
+                fingerprints = pool.map(part_func, smiles)
+        finally: 
+            pool.close()
+            pool.join()
 
         # Free memory
         del smiles

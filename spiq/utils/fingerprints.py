@@ -39,9 +39,9 @@ def _calculate_morgan_fp(smiles: str, **params) -> np.array:
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             logger.warning(f"SMILES '{smiles}' could not be converted to a molecule. Returning a random fingerprint.")
-            return np.random.randint(0, 2, fpSize)
+            return np.random.randint(0, 2, fpSize, dtype='uint8')
         fp = rdFingerprintGenerator.GetMorganGenerator(radius=radius, fpSize=fpSize).GetFingerprint(mol)
-        fp_arr = np.zeros((fpSize,), dtype=int)
+        fp_arr = np.zeros((fpSize,), dtype='uint8')
         DataStructs.ConvertToNumpyArray(fp, fp_arr) 
         return fp_arr 
     except Exception as e:
@@ -91,6 +91,6 @@ class FingerprintCalculator:
         # Bind the additional parameters to the selected function.
         part_func = partial(func, **params)
 
-        with Pool(processes=os.cpu_count()) as pool:
+        with Pool(processes=nprocesses) as pool:
             fingerprints = pool.map(part_func, smiles)
         return np.array(fingerprints)

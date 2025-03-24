@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 import logging
 from functools import partial
-
-# Assuming your module is named "fingerprint_module.py", adjust the import as needed.
+from spiq.streamer.data_streamer import DataStreamer
 from spiq.utils.fingerprints import _calculate_morgan_fp, FingerprintCalculator
 
 # A fixture for common fingerprint parameters.
@@ -79,3 +78,29 @@ def test_fingerprint_calculator_invalid_fp(fp_params):
     smiles_list = ["CCO", "C1CCCCC1"]
     with pytest.raises(ValueError):
         calculator.FingerprintFromSmiles(smiles_list, 'unsupported', nprocesses=1, **fp_params)
+
+def test_fingerprint_with_data_parser(tmp_path):
+    # Create a temporary file with known content.
+    file_content = ["CCC(C)C(NC(=O)NC1=CC(C)=CC=C1C)C(=O)NC1=NC=CC=C1C1CC1\n", 
+                    "CC(C)(C)OC(=O)N[C@H](CC(=O)NC1=NC=CC=C1C1CC1)CC1=CC=CC=C1\n",
+                    "O=C(NC1=NC=CC=C1C1CC1)C1=CC=C(N2CCN(C[C@H](O)CO)CC2)C=C1\n",
+                    "CC1=CC=CC=C1[C@@H](CC(=O)NC1=NC=CC=C1C1CC1)NC(=O)OC(C)(C)C\n  ", 
+                    "CC(C)(C)OC(=O)NCCOC1=CC=C(C(=O)NC2=NC=CC=C2C2CC2)C=C1\n  ", 
+                    "CC(C)(C)OC(=O)N1CCC(C2=C(C(=O)NC3=NC=CC=C3C3CC3)NC=C2)C1\n  ", 
+                    "CC(C)(C)OC(=O)N1C[C@H](N2C=CN=N2)C[C@@H]1C(=O)NC1=NC=CC=C1C1CC1\n"]
+
+    file_path = tmp_path / "test.txt"
+    file_path.write_text("".join(file_content))
+
+    result = [] 
+    streamer = DataStreamer()
+    calculator = FingerprintCalculator()
+    chunksize = 2
+    # Expected chunks: [first two lines], [next two lines], [last line]
+    for smiles_chunk in streamer.parse_input(str(file_path), chunksize):
+        fp_chunk = calculator.FingerprintFromSmiles(smiles_chunk, fp='morgan', fpSize=1024, radius=3, nprocesses=1)
+        result.append(fp_chunk)
+
+    assert len(result) == 4 
+    assert result[0].shape == (2, 1024)
+    assert result[3].shape == (1, 1024)

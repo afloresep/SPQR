@@ -66,7 +66,8 @@ def test_fingerprint_calculator_valid(fp_params):
     fingerprints = calculator.FingerprintFromSmiles(smiles_list, 'morgan', nprocesses=1,**fp_params)
     
     assert isinstance(fingerprints, np.ndarray)
-    assert fingerprints.shape == (len(smiles_list), fp_params['fpSize'])
+    assert fingerprints.shape == (len(smiles_list), fp_params['fpSize']) 
+    assert fingerprints[0].nbytes == 2048
 
 
 def test_fingerprint_calculator_invalid_fp(fp_params):

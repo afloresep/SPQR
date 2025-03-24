@@ -6,7 +6,7 @@ class DataStreamer:
     """
     Class for streaming large datasets in manageable chunks.
     """
-    def parse_input(self, input_path:str, chunksize: Optional[int]=None, verbose:int=0) -> Iterator[List[str]]: 
+    def parse_input(self, input_path:str, chunksize: Optional[int]=None, verbose:int=0, col_idx:int=0) -> Iterator[List[str]]: 
         """
         Reads input data from a file or a directory of files and yields the data in chunks.
 
@@ -22,6 +22,8 @@ class DataStreamer:
             chunksize (Optional[int]): The number of lines to include in each yielded chunk. If None, 
                 the entire file content is yielded as a single chunk.
             verbose (int): Level of verbosity. Default is 0
+            col_idx (int): Column index for the smiles in the input data. This is for cases where the input data
+            contains multiple columns. Default is 0. 
 
         Yields:
             List[str]: A list of lines from the input file(s), where the list length will be equal to 
@@ -38,7 +40,7 @@ class DataStreamer:
                 print(f"Processing file:", file_path)
             with open(file_path, 'r') as file:               
                 for line in file:
-                  buffer.append(line)
+                  buffer.append(line.split()[col_idx])
                   if chunksize is not None and len(buffer) == chunksize:
                     yield buffer[:]
                     buffer.clear()

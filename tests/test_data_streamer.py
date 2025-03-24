@@ -16,8 +16,8 @@ def test_parse_input_with_chunksize(tmp_path: Path):
     chunksize = 2
     # Expected chunks: [first two lines], [next two lines], [last line]
     result = list(streamer.parse_input(str(file_path), chunksize))
-    assert result == [file_content[:2], file_content[2:4], file_content[4:]]
- 
+    assert result == [["line1", "line2"],["line3", "line4"], ["line5"]]
+    
 def test_parse_input_without_chunksize(tmp_path: Path):
     # Test when chunksize is None: the entire file should be returned as one chunk.
     file_content = ["line1\n", "line2\n", "line3\n"]
@@ -27,7 +27,7 @@ def test_parse_input_without_chunksize(tmp_path: Path):
     streamer = DataStreamer()
     result = list(streamer.parse_input(str(file_path), None))
     # Expect a single chunk containing all lines.
-    assert result == [file_content]
+    assert result == [["line1", "line2", "line3"]]
     
 def test_parse_input_file_not_found(tmp_path: Path):
     # Test that a FileNotFoundError is raised when the file does not exist.

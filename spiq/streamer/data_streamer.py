@@ -40,10 +40,14 @@ class DataStreamer:
                 print(f"Processing file:", file_path)
             with open(file_path, 'r') as file:               
                 for line in file:
-                  buffer.append(line.split()[col_idx])
-                  if chunksize is not None and len(buffer) == chunksize:
-                    yield buffer[:]
-                    buffer.clear()
+                    try:
+                        buffer.append(line.split()[col_idx])
+                        if chunksize is not None and len(buffer) == chunksize:
+                            yield buffer[:]
+                            buffer.clear()
+                    except Exception as e:
+                        print(f"An exception occured with line: {line}. Raised Error: {e} ")
+                        continue
         # Process remaining items in the buffer
         # or in case no chunksize was provided yield the whole thing
                 if buffer:

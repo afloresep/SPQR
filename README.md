@@ -110,8 +110,8 @@ For an interactive tutorial, check out examples/tutorial.ipynb. Here’s a snipp
 ```
 
 # Documentation
-	•	API Reference: Documentation is auto-generated from the code’s docstrings using Sphinx. See the docs folder for more details.
-	•	Tutorials & Guides: Refer to the Jupyter Notebook in examples/tutorial.ipynb for a hands-on introduction.
+- API Reference: Documentation is auto-generated from the code’s docstrings using Sphinx. See the docs folder for more details.
+- Tutorials & Guides: Refer to the Jupyter Notebook in examples/tutorial.ipynb for a hands-on introduction.
 
 # Testing
 
@@ -130,11 +130,10 @@ pytest test/test_data_streamer.py
 
 # Contributing
 Contributions are welcome! Please follow these guidelines:
-	1.	Fork the repository and create your branch:
-git checkout -b feature/my-feature
-	2.	Ensure your proper docstrings.
-	3.	(Ideally) Write tests for new features.
-	4.	Open a pull request describing your changes.
+1.	Fork the repository and create your branch: `git checkout -b feature/my-feature`
+2.	Ensure your proper docstrings.
+3.	(Ideally) Write tests for new features.
+4.	Open a pull request describing your changes.
 
 # License
 This project is licensed under the MIT License. See the LICENSE file for details.

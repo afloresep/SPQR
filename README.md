@@ -110,8 +110,8 @@ For an interactive tutorial, check out examples/tutorial.ipynb. Here’s a snipp
 ```
 
 # Documentation
-	•	API Reference: Documentation is auto-generated from the code’s docstrings using Sphinx. See the docs folder for more details.
-	•	Tutorials & Guides: Refer to the Jupyter Notebook in examples/tutorial.ipynb for a hands-on introduction.
+- API Reference: Documentation is auto-generated from the code’s docstrings using Sphinx. See the docs folder for more details.
+- Tutorials & Guides: Refer to the Jupyter Notebook in examples/tutorial.ipynb for a hands-on introduction.
 
 # Testing
 

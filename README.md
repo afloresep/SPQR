@@ -130,11 +130,10 @@ pytest test/test_data_streamer.py
 
 # Contributing
 Contributions are welcome! Please follow these guidelines:
-	1.	Fork the repository and create your branch:
-git checkout -b feature/my-feature
-	2.	Ensure your proper docstrings.
-	3.	(Ideally) Write tests for new features.
-	4.	Open a pull request describing your changes.
+1.	Fork the repository and create your branch: `git checkout -b feature/my-feature`
+2.	Ensure your proper docstrings.
+3.	(Ideally) Write tests for new features.
+4.	Open a pull request describing your changes.
 
 # License
 This project is licensed under the MIT License. See the LICENSE file for details.

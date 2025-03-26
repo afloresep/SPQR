@@ -1,9 +1,3 @@
-Below is an example of a comprehensive and attractive README.md file for your project:
-
-⸻
-
-
-
 # SPQR: Streaming Product QuantIzation for MoleculaR data
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/afloresep/SPiQ/blob/master/.github/workflows/test.yml)

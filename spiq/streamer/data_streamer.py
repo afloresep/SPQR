@@ -21,9 +21,8 @@ class DataStreamer:
             input_path (str): The path to a file or directory containing input files.
             chunksize (Optional[int]): The number of lines to include in each yielded chunk. If None, 
                 the entire file content is yielded as a single chunk.
-            verbose (int): Level of verbosity. Default is 0
-            col_idx (int): Column index for the smiles in the input data. This is for cases where the input data
-            contains multiple columns. Default is 0. 
+            verbose (int): Level of verbosity. Default is 0.
+            col_idx (int): Column index for the smiles in the input data. This is for cases where the input data contains multiple columns. Default is 0. 
 
         Yields:
             List[str]: A list of lines from the input file(s), where the list length will be equal to 
@@ -46,7 +45,8 @@ class DataStreamer:
                             yield buffer[:]
                             buffer.clear()
                     except Exception as e:
-                        print(f"An exception occured with line: {line}. Raised Error: {e} ")
+                        print(f"\nAn exception occured with line: {line}. Raised Error: {e}")
+                        print("\n")
                         continue
         # Process remaining items in the buffer
         # or in case no chunksize was provided yield the whole thing

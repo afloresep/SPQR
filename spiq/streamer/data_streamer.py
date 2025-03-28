@@ -41,7 +41,7 @@ class DataStreamer:
                 for line in file:
                     try:
                         buffer.append(line.split()[col_idx])
-                        if chunksize is not None and len(buffer) == chunksize:
+                        if chunksize is not None and len(buffer) == int(chunksize):
                             yield buffer[:]
                             buffer.clear()
                     except Exception as e:

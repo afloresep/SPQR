@@ -47,6 +47,7 @@ def parse_arguments():
     parser.add_argument('--output-path', type=str, default='.', help="Output path for the training data generated")
     parser.add_argument('--training-size', type=int, default=100_000, help="Amount of fingerprints to include in the training data")
     parser.add_argument('--file-filter', type=str, default= None, help="File format for the fingeprint files. It will filter all files in the `--input-path` by that file format (e.g. parquet)")
+    parser.add_argument('--fpSize', type=int, default=1024, help="Size of the fingerprint that is going to be read. Default is 1024")
 
     return parser.parse_args()
 
@@ -54,7 +55,9 @@ def parse_arguments():
 def get_training_data(fp_path:str, 
                       output_path:str,
                       training_size:int,
-                      file_format:str=None):
+                      fpSize:int, 
+                      file_format:str=None, 
+                      ):
 
     # Create output directory if it doesnt exist
     os.makedirs(output_path, exist_ok=True)
@@ -76,23 +79,25 @@ def get_training_data(fp_path:str,
     if file_ext not in ['parquet', 'npy']:
         raise ValueError('Only {.parquet, .npy} are supported for the fingeprint chunks', file_ext)
 
-
-    number_files = len(files)
+    number_files = int(len(files))
 
     # Number of fingerprints to get from each fp chunk
     fp_sample_size=int(training_size/(number_files))
     assert fp_sample_size > 0, "The number of fingeprints per file (training_size / number of files) must be greater than 0"
     
-    training_data = np.empty([(fp_sample_size*number_files), 1024], dtype='uint8')
+    training_data = np.empty([(fp_sample_size*number_files), fpSize], dtype='uint8')
     
     if file_ext == 'parquet':
         for i, file in enumerate(files):
             fp_df = pd.read_parquet(os.path.join(fp_path, file), engine='pyarrow')
             assert len(fp_df) > fp_sample_size, "The number of fingerprints in the file must be larger than the fraction sample size"
             fp_df_sample = fp_df.sample(fp_sample_size)
-            arr = fp_df_sample.to_numpy() 
+            arr = fp_df_sample.to_numpy()
+            assert arr.shape[1] == fpSize, f"The fingerprint size of the read fingerprint should be the same as the selected fingerprint size for the training data. Read fpSize={arr.shape[1]} but got args.fpSize={fpSize}"
             training_data[i* int(fp_sample_size):(i+1)*int(fp_sample_size), :] = arr
             print(f"\rTraining size: {i*(int(fp_sample_size)):,}/{fp_sample_size*number_files:,}. Files used: {i}/{number_files}", end='', flush=True)
+            if i == 10: 
+                break
         # Check the size of the training data
 
     if file_ext == 'npy':
@@ -103,7 +108,7 @@ def get_training_data(fp_path:str,
             print(f"\rTraining size: {i*(int(fp_sample_size)):,}/{fp_sample_size*number_files:,}. Files used: {i}/{number_files}", end='', flush=True) 
 
     
-    print(f"\nSaving {len(training_data)} training samples in {output_path}")
+    print(f"\nSaving {training_data.shape} training samples in {output_path}")
     training_data_output_path = os.path.join(output_path, 'training_data.joblib')
     print(training_data_output_path)
     joblib.dump(training_data, training_data_output_path)
@@ -116,6 +121,7 @@ def main():
     get_training_data(fp_path=args.input_path,
                       output_path=args.output_path,
                       training_size=args.training_size, 
+                      fpSize=args.fpSize,
                       file_format=args.file_filter)
     e = time.time()
 

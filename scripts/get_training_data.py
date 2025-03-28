@@ -29,7 +29,7 @@ Args:
 -
 
     Did some testing on size and speed saving with different methods. Overall np.save or joblib are the fastest methods.
-    -------------------------------------------------------
+ -------------------------------------------------------
 | method               | saving time   | Loading time   |
 | ----------------------------------------------------- |
 | np.save              | Save: 27.704s | Load: 6.802s   |
@@ -37,7 +37,7 @@ Args:
 | pickle               | Save: 58.335s | Load: 6.892s   |
 | joblib               | Save: 21.249s | Load: 8.224s   |
 | Parquet (pyarrow)    | Save: 107.587s| Load: 12.236s  |
-    -------------------------------------------------------
+  ------------------------------------------------------
 """  
 
 
@@ -96,8 +96,6 @@ def get_training_data(fp_path:str,
             assert arr.shape[1] == fpSize, f"The fingerprint size of the read fingerprint should be the same as the selected fingerprint size for the training data. Read fpSize={arr.shape[1]} but got args.fpSize={fpSize}"
             training_data[i* int(fp_sample_size):(i+1)*int(fp_sample_size), :] = arr
             print(f"\rTraining size: {i*(int(fp_sample_size)):,}/{fp_sample_size*number_files:,}. Files used: {i}/{number_files}", end='', flush=True)
-            if i == 10: 
-                break
         # Check the size of the training data
 
     if file_ext == 'npy':

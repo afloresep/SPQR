@@ -76,7 +76,7 @@ class PQEncoder(PQEncoderBase):
         self.encoder_is_trained = True
         del X_train # remove initial training data from memory
        
-    def transform(self, X:np.array, **kwargs) -> np.array:
+    def transform(self, X:np.array, verbose:int=1, **kwargs) -> np.array:
         """
         Transforms the input matrix X into its PQ-codes.
 
@@ -102,7 +102,11 @@ class PQEncoder(PQEncoderBase):
 
         # If our original vector is 1024 and our m (splits) is 8 then each subvector will be of dim= 1024/8 = 128
         subvector_dim = int(D / self.m)
-        for subvector_idx in tqdm(range(self.m), desc='Generating PQ-codes'):
+
+        iterable = range(self.m)
+        if verbose > 0: 
+            iterable = tqdm(iterable, desc='Generating PQ-codes')
+        for subvector_idx in iterable:
             X_train_subvector = X[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
             # For every subvector, run KMeans.predict(). Then look in the codebook for the index of the cluster that is closest
             # Appends the centroid index to the pq_code.  

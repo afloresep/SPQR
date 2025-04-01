@@ -37,7 +37,7 @@ SPQR leverages the concept of Streaming Product Quantization to cluster high-dim
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/spqr.git
+   git clone https://github.com/afloresep/spqr.git
    cd spqr
    ```
 
@@ -65,11 +65,11 @@ The entire pipeline from SMILES strings to clustering can be run via the main sc
 python scripts/main.py
 ```
 
-This script integrates all modules—from data streaming to fingerprint calculation and PQ encoding—providing a seamless experience for clustering molecular data.
+This script integrates all modules (from data streaming to fingerprint calculation and PQ encoding) for clustering molecular data.
 
 ### Tutorial Notebook
 
-For an interactive tutorial, check out examples/tutorial.ipynb. Here’s a snippet that demonstrates key functionalities
+For an interactive tutorial, check out `examples/tutorial.ipynb`. 
 
 ## Project Structure
 

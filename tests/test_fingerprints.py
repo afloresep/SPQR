@@ -3,7 +3,7 @@ import pytest
 import logging
 from functools import partial
 from spiq.streamer.data_streamer import DataStreamer
-from spiq.utils.fingerprints import _calculate_morgan_fp, FingerprintCalculator
+from spiq.utils.fingerprints import _calculate_morgan_fp, _calculate_mqn_fp,  FingerprintCalculator
 
 # A fixture for common fingerprint parameters.
 @pytest.fixture
@@ -20,6 +20,17 @@ def test_calculate_morgan_fp_valid(fp_params):
     fingerprint = _calculate_morgan_fp(smiles, **fp_params)
     assert isinstance(fingerprint, np.ndarray)
     assert fingerprint.shape[0] == fp_params['fpSize']
+
+
+def test_calculate_mqn_fp_valid(fp_params):
+    """
+    Test that _calculate_mqn_fp returns a NumPy array of the correct shape
+    when given a valid SMILES string.
+    """
+    smiles = "CCO"  
+    fingerprint = _calculate_mqn_fp(smiles)
+    assert isinstance(fingerprint, np.ndarray)
+    assert fingerprint.shape[0] == 42, "MQN can only be 42 dimensions"
 
 
 def test_calculate_morgan_fp_invalid(fp_params):

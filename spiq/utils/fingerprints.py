@@ -7,10 +7,28 @@ from typing import List
 import numpy as np
 import numpy.typing as npt
 import logging
-from rdkit.Chem import rdFingerprintGenerator
+from rdkit.Chem import rdFingerprintGenerator, rdMolDescriptors
 
 logger = logging.getLogger(__name__)
 
+
+def _calculate_mqn_fp(smiles: str, **params) -> np.array:
+    """Calculate MQN fingerprint for a single SMILES string.
+    
+    Args: 
+        
+        smiles (str): SMILES string for the molecule
+
+    Returns:
+        np.array of fingerprint
+    """
+    try:
+        fingerprint = rdMolDescriptors.MQNs_(Chem.MolFromSmiles(smiles))
+        return np.array(fingerprint)
+    except Exception as e:
+        print(f"Error processing SMILES '{smiles}': {e}")
+        return None
+    
 
 def _calculate_morgan_fp(smiles: str, **params) -> np.array:
     """
@@ -59,6 +77,7 @@ class FingerprintCalculator:
         self.fingerprint_function_map = {
             #TODO: Support for other fingerprints
             'morgan': _calculate_morgan_fp,
+            'mqn': _calculate_mqn_fp,
         }
 
     def FingerprintFromSmiles(self, smiles:List, fp:str, nprocesses:int = os.cpu_count(), **params) -> npt.NDArray:

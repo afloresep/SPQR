@@ -1,17 +1,12 @@
 import os
 import time
 import numpy as np
-from spiq.streamer.data_streamer import DataStreamer
-from spiq.utils.fingerprints import  FingerprintCalculator
 from spiq.utils.helper_functions import format_time, save_chunk
-from spiq.encoder.encoder import PQEncoder
 import time
-import gc
 import logging
 logger = logging.getLogger(__name__)
 import argparse
 import joblib
-import glob
 import pandas as pd
 
 

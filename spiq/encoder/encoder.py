@@ -64,6 +64,7 @@ class PQEncoder(PQEncoderBase):
 
         self.codebook_cluster_centers = np.zeros((self.m, self.k, self.D_subvector), dtype=float)
         # Divide the input vector into m subvectors 
+        subvector_dim = int(D / self.m) 
         for subvector_idx in tqdm(range(self.m), desc='Training PQEncoder'):
             subvector_dim = int(D / self.m) 
             X_train_subvector = X_train[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 

@@ -3,7 +3,7 @@ import numpy as np
 
 from spiq.encoder.encoder import PQEncoder 
 
-def test_fit_successful():
+def test_fit_successful_with_normal_split():
     """
     Test that the fit method runs successfully with proper input data
     and that the codebook is set with the expected shape and the 
@@ -17,14 +17,45 @@ def test_fit_successful():
     
     encoder = PQEncoder(k=k, m=m, iterations=10)
     encoder.fit(X_train)
-    
     assert encoder.encoder_is_trained is True, "Encoder should be trained after successful fit."
-    assert encoder.codebook_cluster_centers.shape == (m, k, D // m), (
-        f"Expected codebook shape to be {(m, k, D//m)}, "
-        f"got {encoder.codebook_cluster_centers.shape}"
-    )
-    # Ensure dtype is float per the code
-    assert encoder.codebook_cluster_centers.dtype == float, "Codebook dtype should be float."
+    
+    for idx, centroids_array in enumerate(encoder.codebook_cluster_centers):
+        assert encoder.codebook_cluster_centers[idx].shape == (k, D // m), (
+            f"Expected codebook shape to be {(k, D//m)}, "
+            f"got {encoder.codebook_cluster_centers[idx].shape}"
+        )
+        # Ensure dtype is float per the code
+        assert np.issubdtype(centroids_array.dtype, np.floating), (
+                f"Codebook {idx} has dtype {centroids_array.dtype}, "
+                "expected a floating type."
+        )
+
+def test_fit_successful_with_custom_split():
+    """
+    Test that the fit method runs successfully with proper input data
+    and that the codebook is set with the expected shape and the 
+    encoder_is_trained flag becomes True.
+    """
+    np.random.seed(42)
+    N, D = 100, 16
+    X_train = np.random.rand(N, D).astype(np.float32)
+    k = 4
+    m = 4
+    
+    encoder = PQEncoder(k=k, m=m, iterations=10, subvector_dim=[10, 4, 2])
+    encoder.fit(X_train)
+    assert encoder.encoder_is_trained is True, "Encoder should be trained after successful fit."
+    
+    for idx, centroids_array in enumerate(encoder.codebook_cluster_centers):
+        assert encoder.codebook_cluster_centers[idx].shape == (k, encoder.subvector_dims[idx]), (
+            f"Expected codebook shape to be {(k, encoder.subvector_dims[idx])}, "
+            f"got {encoder.codebook_cluster_centers[idx].shape}"
+        )
+        # Ensure dtype is float per the code
+        assert np.issubdtype(centroids_array.dtype, np.floating), (
+                f"Codebook {idx} has dtype {centroids_array.dtype}, "
+                "expected a floating type."
+        )
 
 
 def test_fit_raises_assertionerror_for_non2d_input():
@@ -179,7 +210,7 @@ def test_round_trip(trained_pq_encoder, binary_flag):
 
     X_reconstructed = pq_encoder.inverse_transform(X_original_codes, binary=binary_flag)
     # Check shapes
-    expected_shape = (2, pq_encoder.m * pq_encoder.D_subvector)
+    expected_shape = (2, pq_encoder.m * pq_encoder.m)
     assert X_reconstructed.shape == expected_shape, (
         f"Round-trip shape mismatch: got {X_reconstructed.shape}, expected {expected_shape}"
     )

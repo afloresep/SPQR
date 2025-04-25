@@ -24,7 +24,7 @@ def _calculate_mqn_fp(smiles: str, **params) -> np.array:
     """
     try:
         fingerprint = rdMolDescriptors.MQNs_(Chem.MolFromSmiles(smiles))
-        return np.array(fingerprint)
+        return np.array(fingerprint, dtype=np.int16)
     except Exception as e:
         print(f"Error processing SMILES '{smiles}': {e}")
         return None

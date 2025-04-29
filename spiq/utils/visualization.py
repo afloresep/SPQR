@@ -1,4 +1,4 @@
-"""Script to create a simple TMAP from a list of SMILES strings
+"""Simple script to create a simple TMAP from a list of SMILES strings
 """
 from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors
@@ -6,11 +6,20 @@ from faerun import Faerun
 from multiprocessing import Pool
 import tmap as tm 
 import time
+import argparse
 import pandas as pd
 from pandarallel import pandarallel
 from spiq.utils.fingerprints import FingerprintCalculator
 import numpy as np
 
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Process SMILES to TMAP")
+    parser.add_argument('--smiles', type=str, help="The path to a file or directory containing SMILES for the TMAP")  
+    parser.add_argument('--fingerprint', type=str, default='morgan', help="The fingerprint to be used in the TMAP")
+    parser.add_argument('--dataframe', type=str, help="The path to the .csv o .parquet containing `SMILES` and `cluster_id columns. One TMAP per cluster_id value`")
+
+    return parser.parse_args()
 
 def _calculate_fingerprint(smiles:str, fp:str):
     fp_calc = FingerprintCalculator()
@@ -86,7 +95,6 @@ def create_tmap(smiles:list,
    c = [descriptors[col].to_numpy() for col in c_columns]
 
    # Plotting
-   start = time.time()
    f = Faerun(
        view="front",
        coords=False,
@@ -117,5 +125,25 @@ def create_tmap(smiles:list,
 
 
 if __name__=="__main__":
-    smiles = []
-    create_tmap(smiles, 'morgan', tmap_name=f'my_tmap')
+    args = parse_arguments()
+    if args.dataframe is not None:
+        import pandas as pd
+        if args.dataframe.endswith('.parquet'):
+            df = pd.read_parquet(args.dataframe)
+        elif args.dataframe.endswith('.csv'):
+            df = pd.read_csv(args.dataframe)
+        else:
+            raise ValueError('Format for dataframe not supported. Only `.csv` and `.parquet` files')
+
+        for cluster in df['cluster_id'].unique():
+            # print(df[df['cluster_id']==cluster]['smiles'])
+            create_tmap(df[df['cluster_id']==cluster]['smiles'], fingerprint=args.fingerprint, tmap_name=f'tmap_{cluster}')
+            print('TMAP generated for cluster_id ', cluster)
+
+    elif args.smiles is not None:
+        with open(args.smiles, 'r') as file:
+            smiles = file.split(f'/n')
+        create_tmap(smiles=args.smiles, fingerprint=args.fingerprint, tmap_name='my_tmap')
+
+    else:
+        raise ValueError("Either a valid path for the Dataframe or the SMILES must be provided")

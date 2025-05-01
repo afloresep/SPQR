@@ -136,7 +136,6 @@ if __name__=="__main__":
             raise ValueError('Format for dataframe not supported. Only `.csv` and `.parquet` files')
 
         for cluster in df['cluster_id'].unique():
-            # print(df[df['cluster_id']==cluster]['smiles'])
             create_tmap(df[df['cluster_id']==cluster]['smiles'], fingerprint=args.fingerprint, tmap_name=f'tmap_{cluster}')
             print('TMAP generated for cluster_id ', cluster)
 

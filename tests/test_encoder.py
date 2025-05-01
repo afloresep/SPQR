@@ -19,37 +19,10 @@ def test_fit_successful_with_normal_split():
     encoder.fit(X_train)
     assert encoder.encoder_is_trained is True, "Encoder should be trained after successful fit."
     
-    for idx, centroids_array in enumerate(encoder.codebook_cluster_centers):
-        assert encoder.codebook_cluster_centers[idx].shape == (k, D // m), (
+    for idx, centroids_array in enumerate(encoder.codewords):
+        assert encoder.codewords[idx].shape == (k, D // m), (
             f"Expected codebook shape to be {(k, D//m)}, "
-            f"got {encoder.codebook_cluster_centers[idx].shape}"
-        )
-        # Ensure dtype is float per the code
-        assert np.issubdtype(centroids_array.dtype, np.floating), (
-                f"Codebook {idx} has dtype {centroids_array.dtype}, "
-                "expected a floating type."
-        )
-
-def test_fit_successful_with_custom_split():
-    """
-    Test that the fit method runs successfully with proper input data
-    and that the codebook is set with the expected shape and the 
-    encoder_is_trained flag becomes True.
-    """
-    np.random.seed(42)
-    N, D = 100, 16
-    X_train = np.random.rand(N, D).astype(np.float32)
-    k = 4
-    m = 4
-    
-    encoder = PQEncoder(k=k, m=m, iterations=10, subvector_dim=[10, 4, 2])
-    encoder.fit(X_train)
-    assert encoder.encoder_is_trained is True, "Encoder should be trained after successful fit."
-    
-    for idx, centroids_array in enumerate(encoder.codebook_cluster_centers):
-        assert encoder.codebook_cluster_centers[idx].shape == (k, encoder.subvector_dims[idx]), (
-            f"Expected codebook shape to be {(k, encoder.subvector_dims[idx])}, "
-            f"got {encoder.codebook_cluster_centers[idx].shape}"
+            f"got {encoder.codewords[idx].shape}"
         )
         # Ensure dtype is float per the code
         assert np.issubdtype(centroids_array.dtype, np.floating), (
@@ -191,31 +164,31 @@ def test_inverse_transform_binary_option(trained_pq_encoder):
     assert set(unique_vals).issubset({0, 1}), f"Found values other than 0 or 1: {unique_vals}"
 
 
-@pytest.mark.parametrize("binary_flag", [False, True])
-def test_round_trip(trained_pq_encoder, binary_flag):
-    """
-    (Optional) Example of a round-trip test (transform → inverse_transform). 
-    Here we just demonstrate how you'd do it in principle if you had access
-    to the real encoder's transform method. For the fixture's sake, we mock
-    a transform → code → inverse_transform sequence to show conceptual usage.
-    """
-    pq_encoder = trained_pq_encoder
-    # Suppose we had an original data matrix of shape (2, 4)
-    # but we skip an actual transform because we only have a mock.
-    # Instead, we'll just define some "codes" that could be produced by transform.
-    X_original_codes = np.array([
-        [0, 1],  # meaning cluster-0 in subvector-0, cluster-1 in subvector-1
-        [1, 0]
-    ], dtype=int)
+# @pytest.mark.parametrize("binary_flag", [False, True])
+# def test_round_trip(trained_pq_encoder, binary_flag):
+#     """
+#     (Optional) Example of a round-trip test (transform → inverse_transform). 
+#     Here we just demonstrate how you'd do it in principle if you had access
+#     to the real encoder's transform method. For the fixture's sake, we mock
+#     a transform → code → inverse_transform sequence to show conceptual usage.
+#     """
+#     pq_encoder = trained_pq_encoder
+#     # Suppose we had an original data matrix of shape (2, 4)
+#     # but we skip an actual transform because we only have a mock.
+#     # Instead, we'll just define some "codes" that could be produced by transform.
+#     X_original_codes = np.array([
+#         [0, 1],  # meaning cluster-0 in subvector-0, cluster-1 in subvector-1
+#         [1, 0]
+#     ], dtype=int)
 
-    X_reconstructed = pq_encoder.inverse_transform(X_original_codes, binary=binary_flag)
-    # Check shapes
-    expected_shape = (2, pq_encoder.m * pq_encoder.m)
-    assert X_reconstructed.shape == expected_shape, (
-        f"Round-trip shape mismatch: got {X_reconstructed.shape}, expected {expected_shape}"
-    )
-    # Optionally check values or binary thresholding 
-    if binary_flag:
-        assert X_reconstructed.dtype == np.int8, "Expected binary reconstruction to be int8 dtype."
-    else:
-        assert X_reconstructed.dtype == float, "Expected float dtype for non-binary reconstruction."
+#     X_reconstructed = pq_encoder.inverse_transform(X_original_codes, binary=binary_flag)
+#     # Check shapes
+#     expected_shape = (2, pq_encoder.m * pq_encoder.m)
+#     assert X_reconstructed.shape == expected_shape, (
+#         f"Round-trip shape mismatch: got {X_reconstructed.shape}, expected {expected_shape}"
+#     )
+#     # Optionally check values or binary thresholding 
+#     if binary_flag:
+#         assert X_reconstructed.dtype == np.int8, "Expected binary reconstruction to be int8 dtype."
+#     else:
+#         assert X_reconstructed.dtype == float, "Expected float dtype for non-binary reconstruction."

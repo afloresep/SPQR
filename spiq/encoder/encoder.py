@@ -1,15 +1,13 @@
 import numpy as np
 from .encoder_base import PQEncoderBase
 from tqdm import tqdm
-import time
-from typing import List, Optional
 from sklearn.cluster import KMeans
 
 class PQEncoder(PQEncoderBase):
     """
     Class to encode high-dimensional vectors into PQ-codes.
     """
-    def __init__(self, k:int=256, m:int=8, iterations=20, subvector_dim:Optional[List[int]]=None):
+    def __init__(self, k:int=256, m:int=8, iterations=20):
         """ Initializes the encoder with trained sub-block centroids.
 
         Args:
@@ -18,16 +16,6 @@ class PQEncoder(PQEncoderBase):
             m (int): Number of distinct subvectors of the input X vector. 
             m is a subvector of dimension D' = D/m where D is the 
             dimension of the input vector X. D is therefore a multiple of m
-            custom_split (List[int]): A custom split for the input vector. Replaces `m` for a custom 
-            split. The List holds the number of values per split in sequential order. For example 
-                For an input vector [1,2,3,4,5,6,7,8] if we pass custom_split = [2,4,2]
-                then the subvector would be:
-                    subvector_a = [1,2]
-                    subvector_b = [3,4,5,6]
-                    subvector_a = [7,8]
-                Where as with m = 4 it would have been 
-                [[1,2], [3,4], [5,6], [7,8]] 
-
             iterations (int): Number of iterations for the k-means
 
         High values of k increase the computational cost of the quantizer as well as memory 
@@ -37,10 +25,9 @@ class PQEncoder(PQEncoderBase):
         Reference: DOI: 10.1109/TPAMI.2010.57
         """
 
+        self.m = m 
         self.k = k 
         self.iterations = iterations
-        self.subvector_dims = subvector_dim 
-        self.m = m if subvector_dim is None else len(subvector_dim)
         self.encoder_is_trained = False
         self.codebook_dtype =  np.uint8 if self.k <= 2**8 else (np.uint16 if self.k<= 2**16 else np.uint32)
         self.pq_trained = []
@@ -69,34 +56,25 @@ class PQEncoder(PQEncoderBase):
         assert X_train.ndim == 2, "The input can only be a matrix (X.ndim == 2)"
         N, D = X_train.shape # N number of input vectors, D dimension of the vectors
         assert self.k < N, "the number of training vectors (N for N,D = X_train.shape) should be more than the number of centroids (K)"
-        if self.subvector_dims is None:
-            assert D % self.m == 0, f"Vector (fingeprint) dimension should be divisible by the number of subvectors (m). Got {D} / {self.m}" 
-        else:
-            assert D == np.sum(self.subvector_dims), f"The sum of the subvector dimensions must be the same as the dimension of the input matrix. Got input matrix of dimension {D} =! {np.sum(self.subvector_dims)}"
+        assert D % self.m == 0, f"Vector (fingeprint) dimension should be divisible by the number of subvectors (m). Got {D} / {self.m}" 
+        self.D_subvector = int(D / self.m) # Dimension of the subvector. 
         self.og_D = D # We save the original dimensions of the input vector (fingerprint) for later use
         assert self.encoder_is_trained == False, "Encoder can only be fitted once"
+        print(N, D)
 
-        self.codebook_cluster_centers = [] 
-
-        if self.subvector_dims is None:
-            # Dimensions for every subvector. We store them in a list so transform is compatible with custom subvector dimensions  
-            # Since no custom split was passed then each subvector has the same dimension [D/ self.m] 
-            self.subvector_dims = [int(D/ self.m)] * self.m
+        self.codewords= np.zeros((self.m, self.k, self.D_subvector), dtype=float)
             
-        # self.codebook_cluster_centers = np.zeros((self.m, self.k, self.D_subvector), dtype=float)
         # Divide the input vector into m subvectors 
-        start_idx = 0 
-        for idx, dim in enumerate(tqdm(self.subvector_dims, desc='Training PQEncoder')):
-            end_idx = start_idx + dim
-            X_train_subvector = X_train[:, start_idx:end_idx]
+        subvector_dim = int(D / self.m) 
+        for subvector_idx in tqdm(range(self.m), desc='Training PQEncoder'):
+            X_train_subvector = X_train[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
             # For every subvector, run KMeans and store the centroids in the codebook 
             kmeans = KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations, **kwargs).fit(X_train_subvector)
             self.pq_trained.append(kmeans)
 
-            start_idx = end_idx 
             # Results for training 1M 1024 dimensional fingerprints were: 5 min 58 s, with k=256, m=4, iterations=200, this is much faster than using scipy
             # Store the cluster_centers coordinates in the codebook
-            self.codebook_cluster_centers.append(kmeans.cluster_centers_)
+            self.codewords[subvector_idx] = kmeans.cluster_centers_ # Store the cluster_centers coordinates in the codebook
 
         self.encoder_is_trained = True
         del X_train # remove initial training data from memory
@@ -128,22 +106,18 @@ class PQEncoder(PQEncoderBase):
         # Store the index of the Nearest centroid for each subvector
         pq_codes = np.zeros((N, self.m), dtype=self.codebook_dtype)
 
+        iterable = range(self.m)
         # If our original vector is 1024 and our m (splits) is 8 then each subvector will be of dim= 1024/8 = 128
-        iterable = enumerate(self.subvector_dims)
         if verbose > 0: 
             iterable = tqdm(iterable, desc='Generating PQ-codes', total=self.m)
 
-        start_idx = 0
-        for subvector_idx, dim in iterable:
-            end_idx = start_idx + dim
-            X_subvector = X[:, start_idx:end_idx]
- 
-            # Get the kmeans object trained before on every subvector
-            kmeans = self.pq_trained[subvector_idx]
-            print(f"Using the Kmeans ({subvector_idx}) trained on data [{start_idx}:{end_idx}]")
-            # Run predict to get the centroid id for that specific subvector
-            pq_codes[:, subvector_idx] = kmeans.predict(X_subvector) 
-            start_idx = end_idx
+        subvector_dim = int(D / self.m)
+
+        for subvector_idx in iterable:
+            X_train_subvector = X[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
+            # For every subvector, run KMeans.predict(). Then look in the codebook for the index of the cluster that is closest
+            # Appends the centroid index to the pq_code.  
+            pq_codes[:, subvector_idx] =  self.pq_trained[subvector_idx].predict(X_train_subvector, **kwargs)
             
         # Free memory 
         del  X
@@ -175,8 +149,9 @@ class PQEncoder(PQEncoderBase):
         assert D == (self.og_D  / self.D_subvector), f"The dimension D of the PQ-codes (N,D) should be the same as the original vector dimension divided the subvector dimension"
 
         X_inversed = np.empty((N, D*self.D_subvector), dtype=float)
+        print(X_codes.shape, X_inversed.shape, D, self.m, self.D_subvector)
         for subvector_idx in range(self.m):
-            X_inversed[:, subvector_idx*self.D_subvector:((subvector_idx+1)*self.D_subvector)] = self.codebook_cluster_centers[subvector_idx][X_codes[:, subvector_idx], :]
+            X_inversed[:, subvector_idx*self.D_subvector:((subvector_idx+1)*self.D_subvector)] = self.codewords[subvector_idx][X_codes[:, subvector_idx], :]
 
         # Free memory
         del X_codes

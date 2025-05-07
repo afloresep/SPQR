@@ -18,6 +18,7 @@ def parse_arguments():
     parser.add_argument('--smiles', type=str, help="The path to a file or directory containing SMILES for the TMAP")  
     parser.add_argument('--fingerprint', type=str, default='morgan', help="The fingerprint to be used in the TMAP")
     parser.add_argument('--dataframe', type=str, help="The path to the .csv o .parquet containing `SMILES` and `cluster_id columns. One TMAP per cluster_id value`")
+    parser.add_argument('--column', type=str, help="The name of the column to use as cluster_id. One TMAP will be produced per value in this column")
 
     return parser.parse_args()
 
@@ -135,8 +136,8 @@ if __name__=="__main__":
         else:
             raise ValueError('Format for dataframe not supported. Only `.csv` and `.parquet` files')
 
-        for cluster in df['cluster_id'].unique():
-            create_tmap(df[df['cluster_id']==cluster]['smiles'], fingerprint=args.fingerprint, tmap_name=f'tmap_{cluster}')
+        for cluster in df[args.column].unique():
+            create_tmap(df[df[args.column]==cluster]['smiles'], fingerprint=args.fingerprint, tmap_name=f'tmap_{cluster}')
             print('TMAP generated for cluster_id ', cluster)
 
     elif args.smiles is not None:

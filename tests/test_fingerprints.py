@@ -17,7 +17,7 @@ def test_calculate_morgan_fp_valid(fp_params):
     when given a valid SMILES string.
     """
     smiles = "CCO"  
-    fingerprint = _calculate_morgan_fp(smiles, **fp_params)
+    fingerprint = _calculate_morgan_fp(smiles, to_numpy=True, **fp_params)
     assert isinstance(fingerprint, np.ndarray)
     assert fingerprint.shape[0] == fp_params['fpSize']
 
@@ -74,7 +74,7 @@ def test_fingerprint_calculator_valid(fp_params):
     """
     calculator = FingerprintCalculator()
     smiles_list = ["CCO", "C1CCCCC1", "O=C=O"]
-    fingerprints = calculator.FingerprintFromSmiles(smiles_list, 'morgan', nprocesses=1,**fp_params)
+    fingerprints = calculator.FingerprintFromSmiles(smiles_list, 'morgan', to_numpy=True, nprocesses=1,**fp_params)
     
     assert isinstance(fingerprints, np.ndarray)
     assert fingerprints.shape == (len(smiles_list), fp_params['fpSize']) 

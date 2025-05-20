@@ -43,6 +43,8 @@ def _calculate_morgan_fp(smiles: str, **params) -> np.array:
             Expected keys:
                 - fpSize (int): Size of the fingerprint (number of bits).
                 - radius (int): Radius parameter for the Morgan algorithm.
+                - to_numpy(bool): Bool to convert the fingeprint to a numpy array. Default True, 
+                otherwise is returned as `rdkit.DataStructs.cDataStructs.ExplicitBitVect` object
 
     Returns:
         np.array: An array representing the fingerprint.
@@ -51,6 +53,8 @@ def _calculate_morgan_fp(smiles: str, **params) -> np.array:
     """
     fpSize = params.get('fpSize')
     radius = params.get('radius')
+    to_numpy= params.get('to_numpy')
+
     if fpSize is None or radius is None:
         raise ValueError("Missing required parameters: 'fpSize' and/or 'radius'.")
     try:
@@ -59,9 +63,15 @@ def _calculate_morgan_fp(smiles: str, **params) -> np.array:
             logger.warning(f"SMILES '{smiles}' could not be converted to a molecule. Returning a random fingerprint.")
             return np.random.randint(0, 2, fpSize, dtype='uint8')
         fp = rdFingerprintGenerator.GetMorganGenerator(radius=radius, fpSize=fpSize).GetFingerprint(mol)
-        fp_arr = np.zeros((fpSize,), dtype='uint8')
-        DataStructs.ConvertToNumpyArray(fp, fp_arr) 
-        return fp_arr 
+
+        if to_numpy:
+            fp_arr = np.zeros((fpSize,), dtype='uint8')
+            DataStructs.ConvertToNumpyArray(fp, fp_arr) 
+            return fp_arr 
+
+
+        return fp
+
     except Exception as e:
         logger.error(f"Error processing SMILES '{smiles}': {e}")
         return None

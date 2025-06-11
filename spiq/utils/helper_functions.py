@@ -50,7 +50,7 @@ def format_time(seconds):
     return f"{int(hours)} h; {int(minutes)}min; {seconds:.2f} s" 
 
 def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
-                  file_format: str = 'npy', **kwargs) -> str:
+                  file_format: str = 'npy', name:str="fingerprints_chunk", **kwargs) -> str:
     """
     Save a chunk of fingerprint data to a file in the specified format.
 
@@ -62,6 +62,7 @@ def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
                            - 'npy': Save as a NumPy binary file.
                            - 'parquet': Save as an Apache Parquet file.
                            Default is 'npy'.
+        name (str): Name prefix for each the file to be generated. 
         **kwargs: Additional keyword arguments to pass to the saving function.
                   For 'npy', kwargs are passed to `np.save`.
                   For 'parquet', kwargs are passed to `DataFrame.to_parquet`.
@@ -73,11 +74,11 @@ def save_chunk(fp_chunk: np.ndarray, output_dir: str, chunk_index: int,
     os.makedirs(output_dir, exist_ok=True)
     
     if file_format.lower() == 'npy':
-        filename = os.path.join(output_dir, f"fingerprints_chunk_{chunk_index:05d}.npy")
+        filename = os.path.join(output_dir, f"{name}_{chunk_index:05d}.npy")
         np.save(filename, fp_chunk, **kwargs)
         del fp_chunk
     elif file_format.lower() == 'parquet':
-        filename = os.path.join(output_dir, f"fingerprints_chunk_{chunk_index:05d}.parquet")
+        filename = os.path.join(output_dir, f"{name}_{chunk_index:05d}.parquet")
         # Each row is a fingerprint and each column is a bit.
         df = pd.DataFrame(fp_chunk)
         del fp_chunk

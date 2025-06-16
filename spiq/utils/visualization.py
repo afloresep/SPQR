@@ -11,7 +11,7 @@ import pandas as pd
 from pandarallel import pandarallel
 from spiq.utils.fingerprints import FingerprintCalculator
 import numpy as np
-
+from sklearn.neighbors import NearestNeighbors
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process SMILES to TMAP")
@@ -25,7 +25,7 @@ def parse_arguments():
 def _calculate_fingerprint(smiles:str, fp:str):
     fp_calc = FingerprintCalculator()
     
-    fp_arr = fp_calc.FingerprintFromSmiles(smiles,fp=fp, fpSize=1024, radius=3)
+    fp_arr = fp_calc.FingerprintFromSmiles(smiles,fp=fp, fpSize=1024, radius=2)
     return fp_arr
 
 
@@ -123,6 +123,77 @@ def create_tmap(smiles:list,
 
    f.add_tree(tmap_name+"_TMAP_tree", {"from": s, "to": t}, point_helper=tmap_name+"_TMAP")
    f.plot(tmap_name+"_TMAP", template='smiles')
+
+
+
+def representative_tmap(smiles:list,
+                mqn_codes:np.array,
+                descriptors:bool=True, 
+                tmap_name:str='my_tmap'):
+    
+
+        """
+        Script for generating a simple TMAP using vectors (e.g. PCA coordinates) instead of SMILES
+        Mainly to be used to create the primary TMAP. 
+        """
+        nbrs = NearestNeighbors(n_neighbors=21, metric='euclidean').fit(mqn_codes)
+    
+        distances, indices = nbrs.kneighbors(mqn_codes)
+        edge_list = []
+        for i in range(len(mqn_codes)):
+            for neighbor_idx, dist in zip(indices[i, 1:], distances[i, 1:]):
+                edge_list.append((i, neighbor_idx, float(dist)))
+
+
+        descriptors = calc_properties(smiles) # This should be a np.array
+
+        # Get the coordinates and Layout Configuration
+        cfg = tm.LayoutConfiguration()
+        cfg.node_size = 1/30 
+        cfg.mmm_repeats = 2
+        cfg.sl_extra_scaling_steps = 10
+        cfg.k = 20 
+        cfg.sl_scaling_type = tm.RelativeToAvgLength
+        x, y, s, t, _ = tm.layout_from_edge_list(len(mqn_codes), edge_list, cfg)
+
+        labels = []
+
+        for inx, row in descriptors.iterrows():
+            labels.append(row['smiles'])
+
+        c_columns = ["HAC", "Number Aromatic Atoms", "Fraction Aromatic_atoms",
+                        "Number of Rings", "MW", "clogP", "Fraction Csp3"]
+        c = [descriptors[col].to_numpy() for col in c_columns]
+
+        # Plotting
+        f = Faerun(
+            view="front",
+            coords=False,
+            title="",
+            clear_color="#FFFFFF",
+        )
+
+        f.add_scatter(
+            tmap_name+"_TMAP",
+            {
+                "x": x,
+                "y": y,
+                "c": np.array(c),
+                "labels":labels,
+            },
+            shader="smoothCircle",
+            point_scale= 2.5 ,
+            max_point_size= 20,
+            interactive=True,
+            series_title= ['HAC', 'Number Aromatic Atoms', 'Fraction Aromatic_atoms', 'Number of Rings', 'MW', 'clogP', 'Fraction Csp3'], 
+            has_legend=True,           
+            colormap=['rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow'],
+            categorical=[False, False, False, False, False, False, False],
+        )
+
+        f.add_tree(tmap_name+"_TMAP_tree", {"from": s, "to": t}, point_helper=tmap_name+"_TMAP")
+        f.plot(tmap_name+"_TMAP", template='smiles')
+
 
 
 if __name__=="__main__":

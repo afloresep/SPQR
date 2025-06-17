@@ -39,7 +39,7 @@ class PQEncoder(PQEncoderBase):
         """
 
         
-    def fit(self, X_train:np.array, **kwargs)->None:
+    def fit(self, X_train:np.array, verbose:int=1, **kwargs)->None:
         """ KMeans fitting of every subvector matrix from the X_train matrix. Populates 
         the codebook by storing the cluster centers of every subvector
 
@@ -50,6 +50,7 @@ class PQEncoder(PQEncoderBase):
 
         Args:
            X_train(np.array): Input matrix to train the encoder.  
+           verbose(int): Level of verbosity. Default is 1
            **kwargs: Optional keyword arguments passed to the underlying KMeans `fit()` function.
         """
         
@@ -60,13 +61,17 @@ class PQEncoder(PQEncoderBase):
         self.D_subvector = int(D / self.m) # Dimension of the subvector. 
         self.og_D = D # We save the original dimensions of the input vector (fingerprint) for later use
         assert self.encoder_is_trained == False, "Encoder can only be fitted once"
-        print(N, D)
-
+        
         self.codewords= np.zeros((self.m, self.k, self.D_subvector), dtype=float)
+        
+        iterable = range(self.m)
+        if verbose > 0: 
+            iterable = tqdm(iterable, desc='Training PQ-codes', total=self.m)    
             
         # Divide the input vector into m subvectors 
         subvector_dim = int(D / self.m) 
-        for subvector_idx in tqdm(range(self.m), desc='Training PQEncoder'):
+
+        for subvector_idx in iterable:
             X_train_subvector = X_train[:, subvector_dim * subvector_idx : subvector_dim * (subvector_idx + 1)] 
             # For every subvector, run KMeans and store the centroids in the codebook 
             kmeans = KMeans(n_clusters=self.k, init='k-means++', max_iter=self.iterations, **kwargs).fit(X_train_subvector)
@@ -93,6 +98,7 @@ class PQEncoder(PQEncoderBase):
         Args:
             X (np.ndarray): Input data matrix of shape (n_samples, n_features), 
                             where n_features must be divisible by the number of subvectors `m`.
+            verbose(int): Level of verbosity. Default is 1
             **kwargs: Optional keyword arguments passed to the underlying KMeans `predict()` function.
 
         Returns:
@@ -124,6 +130,28 @@ class PQEncoder(PQEncoderBase):
 
         # Return pq_codes (labels of the centroids for every subvector from the X_test data)
         return pq_codes
+
+    def fit_transform(self, X:np.array, verbose:int=1, **kwargs) -> np.array:
+        """Fit and transforms the input matrix `X` into its PQ-codes
+
+        The encoder is trained on the matrix and then for each sample in X,
+          the input vector is split into `m` equal-sized vectors subvectors composed 
+          byt the index of the closest centroid. Returns a compact representation of X, 
+          where each sample is encoded as a sequence of centroid indices (i.e PQcodes)
+
+        Args:
+            X (np.array): Input data matrix of shape (n_samples, n_features)
+            verbose (int, optional): Level of verbosity. Defaults to 1.
+            **kwargs: Optional keyword. These arguments will be passed to the underlying KMeans
+            predict() function. 
+
+        Returns:
+            np.array: PQ codes of shape (n_samples, m), where each element is the index of the nearest
+            centroid for the corresponding subvector
+        """
+
+        return self.fit(X, verbose, **kwargs).transform(X, verbose)
+
 
     def inverse_transform(self, X_codes:np.array, binary=False):
         """ Inverse transform. From PQ-code to the original vector. 

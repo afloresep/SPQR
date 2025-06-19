@@ -3,3 +3,4 @@ rdkit
 scikit-learn
 tqdm
 pyarrow
+pqkmeans

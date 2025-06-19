@@ -49,7 +49,7 @@ def test_parse_input_omits_invalid_line_with_col_idx(tmp_path, monkeypatch):
     # We test col_idx=1, should return the second argument in the line (is doing line.split()[1])
     # Since we don't have a second argument in the second line, it will return a index out of list 
     # so it should omit the line and go to the next one, still return a chunksize = 2
-    result = list(ds.parse_input(input_path=str(test_file), chunksize=2, verbose=0, col_idx=1))
+    result = list(ds.parse_input(input_path=str(test_file), chunksize=2, verbose=0, smiles_col=1))
     
     # The expected result is one chunk with both valid lines.
     assert result == [["valid_line11", "valid_line22"]]

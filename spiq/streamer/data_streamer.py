@@ -6,7 +6,7 @@ class DataStreamer:
     """
     Class for streaming large datasets in manageable chunks.
     """
-    def parse_input(self, input_path:str, chunksize: Optional[int]=None, verbose:int=0, col_idx:int=0) -> Iterator[List[str]]: 
+    def parse_input(self, input_path:str, chunksize: Optional[int]=None, verbose:int=0, smiles_col:int=0) -> Iterator[List[str]]: 
         """
         Reads input data from a file or a directory of files and yields the data in chunks.
 
@@ -40,7 +40,7 @@ class DataStreamer:
             with open(file_path, 'r') as file:               
                 for line in file:
                     try:
-                        buffer.append(line.split()[col_idx])
+                        buffer.append(line.split()[smiles_col])
                         if chunksize is not None and len(buffer) == int(chunksize):
                             yield buffer[:]
                             buffer.clear()

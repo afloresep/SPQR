@@ -207,9 +207,13 @@ if __name__=="__main__":
         else:
             raise ValueError('Format for dataframe not supported. Only `.csv` and `.parquet` files')
 
-        for cluster in df[args.column].unique():
-            create_tmap(df[df[args.column]==cluster]['smiles'], fingerprint=args.fingerprint, tmap_name=f'tmap_{cluster}')
-            print('TMAP generated for cluster_id ', cluster)
+        if args.column is not None:
+            for cluster in df[args.column].unique():
+                create_tmap(df[df[args.column]==cluster]['smiles'], fingerprint=args.fingerprint, tmap_name=f'tmap_{cluster}')
+                print('TMAP generated for cluster_id ', cluster)
+
+        else:
+            create_tmap(smiles=df['smiles'], fingerprint=args.fingerprint, tmap_name='my_tmap')
 
     elif args.smiles is not None:
         with open(args.smiles, 'r') as file:

@@ -150,10 +150,14 @@ class PQEncoder(PQEncoderBase):
             centroid for the corresponding subvector
         """
 
-        return self.fit(X, verbose, **kwargs).transform(X, verbose)
+        self.fit(X, verbose, **kwargs)
+        return self.transform(X, verbose)
 
 
-    def inverse_transform(self, X_codes:np.array, binary=False):
+    def inverse_transform(self, 
+                          pq_codes:np.array, 
+                          binary=False, 
+                          round=True):
         """ Inverse transform. From PQ-code to the original vector. 
         This process is lossy so we don't expect to get the exact same data.
         If binary=True then the vectors will be returned in binary. 
@@ -161,14 +165,18 @@ class PQEncoder(PQEncoderBase):
         With binary=True then the returned vectors are transformed from 
         [0.32134, 0.8232, 0.0132, ... 0.1432, 1.19234] to 
         [0, 1, 0, ..., 0, 1]
+        If round=True then the vector will be approximated to integer values
+        (useful in cases where we expeect to have a count-based fingerprint)
 
         Args:
             pq_code: (np.array): Input data of PQ codes to be transformed into the
             original vectors.
+            binary: (bool): Wheter to return the vectors rounded to 0s and 1s. Default is False
+            round: (bool): Round inversed vector to integers values. Default is True  
         """
         
         # Get shape of the input matrix of PQ codes
-        N, D = X_codes.shape
+        N, D = pq_codes.shape
 
         # The dimension of the PQ vectors should be the same 
         # as the number of splits (subvectors) from the original data 
@@ -177,15 +185,12 @@ class PQEncoder(PQEncoderBase):
         assert D == (self.og_D  / self.D_subvector), f"The dimension D of the PQ-codes (N,D) should be the same as the original vector dimension divided the subvector dimension"
 
         X_inversed = np.empty((N, D*self.D_subvector), dtype=float)
-        print(X_codes.shape, X_inversed.shape, D, self.m, self.D_subvector)
         for subvector_idx in range(self.m):
-            X_inversed[:, subvector_idx*self.D_subvector:((subvector_idx+1)*self.D_subvector)] = self.codewords[subvector_idx][X_codes[:, subvector_idx], :]
-
-        # Free memory
-        del X_codes
+            X_inversed[:, subvector_idx*self.D_subvector:((subvector_idx+1)*self.D_subvector)] = self.codewords[subvector_idx][pq_codes[:, subvector_idx], :]
 
         if binary:
             reconstructed_binary = (X_inversed>= 0.6).astype('int8')
             return reconstructed_binary 
 
-        return X_inversed 
+        if round: return X_inversed.astype(int)
+        else: return X_inversed

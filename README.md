@@ -1,4 +1,4 @@
-# SPQR: Streaming Product QuantIzation for MoleculaR data
+# SPQR: Streaming Product Quantization for MoleculaR data
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/afloresep/SPiQ/blob/master/.github/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

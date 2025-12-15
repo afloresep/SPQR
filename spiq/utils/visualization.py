@@ -36,13 +36,14 @@ def _mol_properties_from_smiles(smiles: str) -> tuple:
         return None
     hac = mol.GetNumHeavyAtoms()
     num_aromatic_atoms = sum(1 for atom in mol.GetAtoms() if atom.GetIsAromatic())
-    fraction_aromatic_atoms = num_aromatic_atoms / hac if hac > 0 else 0
     number_of_rings = rdMolDescriptors.CalcNumRings(mol)
+    number_hba= rdMolDescriptors.CalcNumHBA(mol)
+    number_hbd= rdMolDescriptors.CalcNumHBD(mol)
     molecular_weight = Descriptors.ExactMolWt(mol)
     clogP = Descriptors.MolLogP(mol)
     fraction_Csp3 = Descriptors.FractionCSP3(mol)
 
-    return (hac,num_aromatic_atoms, fraction_aromatic_atoms, number_of_rings, molecular_weight, clogP, fraction_Csp3 )
+    return (hac,num_aromatic_atoms, number_hba, number_hbd, number_of_rings, molecular_weight, clogP, fraction_Csp3 )
 
 
 def calc_properties(smiles:list):
@@ -53,7 +54,7 @@ def calc_properties(smiles:list):
         'smiles': smiles
     })
 
-    dataframe[['HAC', 'Number Aromatic Atoms', 'Fraction Aromatic_atoms', 'Number of Rings', 'MW', 'clogP', 'Fraction Csp3']]  = dataframe['smiles'].apply(
+    dataframe[['HAC', 'Number Aromatic Atoms', 'NumHBA','NumHBD', 'Number of Rings', 'MW', 'clogP', 'Fraction Csp3']]  = dataframe['smiles'].apply(
     _mol_properties_from_smiles
     ).parallel_apply(pd.Series)
     
@@ -91,7 +92,7 @@ def create_tmap(smiles:list,
    for inx, row in descriptors.iterrows():
        labels.append(row['smiles'])
 
-   c_columns = ["HAC", "Number Aromatic Atoms", "Fraction Aromatic_atoms",
+   c_columns = ["HAC", "Number Aromatic Atoms", "NumHBA", "NumHBD",
                 "Number of Rings", "MW", "clogP", "Fraction Csp3"]
    c = [descriptors[col].to_numpy() for col in c_columns]
 
@@ -115,15 +116,14 @@ def create_tmap(smiles:list,
        point_scale= 2.5 ,
        max_point_size= 20,
        interactive=True,
-       series_title= ['HAC', 'Number Aromatic Atoms', 'Fraction Aromatic_atoms', 'Number of Rings', 'MW', 'clogP', 'Fraction Csp3'], 
+       series_title= ['HAC', 'Number Aromatic Atoms', 'NumHBA', 'NumHBD', 'Number of Rings', 'MW', 'clogP', 'Fraction Csp3'], 
        has_legend=True,           
-       colormap=['rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow'],
-       categorical=[False, False, False, False, False, False, False],
+       colormap=['rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow', 'rainbow'],
+       categorical=[False, False, False, False, False, False,False, False],
    )
 
    f.add_tree(tmap_name+"_TMAP_tree", {"from": s, "to": t}, point_helper=tmap_name+"_TMAP")
    f.plot(tmap_name+"_TMAP", template='smiles')
-
 
 
 def representative_tmap(smiles:list,

@@ -13,20 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 def _calculate_mqn_fp(smiles: str, **params) -> np.array:
-    """Calculate MQN fingerprint for a single SMILES string.
-    
-    Args: 
-        
-        smiles (str): SMILES string for the molecule
-
-    Returns:
-        np.array of fingerprint
-    """
+    """Calculate MQN fingerprint for a single SMILES string."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        logger.warning(
+            "\nSMILES '%s' could not be parsed into a molecule. Skipping MQN fingerprint.", smiles
+        )
+        return None
     try:
-        fingerprint = rdMolDescriptors.MQNs_(Chem.MolFromSmiles(smiles))
+        fingerprint = rdMolDescriptors.MQNs_(mol)
         return np.array(fingerprint, dtype=np.int16)
     except Exception as e:
-        print(f"Error processing SMILES '{smiles}': {e}")
+        logger.warning("Error processing SMILES '%s': %s. Skipping entry.", smiles, e)
         return None
     
 
@@ -60,7 +58,7 @@ def _calculate_morgan_fp(smiles: str, **params) -> np.array:
     try:
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
-            logger.warning(f"SMILES '{smiles}' could not be converted to a molecule. Returning a random fingerprint.")
+            logger.warning(f"\nSMILES '{smiles}' could not be converted to a molecule. Returning a random fingerprint.")
             return np.random.randint(0, 2, fpSize, dtype='uint8')
         fp = rdFingerprintGenerator.GetMorganGenerator(radius=radius, fpSize=fpSize).GetFingerprint(mol)
 
@@ -121,13 +119,15 @@ class FingerprintCalculator:
         part_func = partial(func, **params)
 
         if isinstance(smiles, str):
-            smiles =[smiles]
+            smiles = [smiles]
         try: 
             with Pool(processes=nprocesses) as pool:
                 fingerprints = pool.map(part_func, smiles)
         finally: 
             pool.close()
             pool.join()
+
+        fingerprints = [fp for fp in fingerprints if fp is not None]
 
         # Free memory
         del smiles

@@ -124,11 +124,14 @@ chelombus-tmap --cluster-file representatives.csv --output rep_tmap
 
 ## Pipeline Scripts
 
-For large-scale processing, use the pipeline scripts in `scripts/`:
+For the full end-to-end pipeline (SMILES → clusters → nested TMAP website), see
+**`scripts/pipeline/`** — a self-contained, numbered run-order with its own
+README and a one-command driver (`run_all.sh`). Other useful scripts in
+`scripts/`:
 
 | Script | Description |
 |---|---|
-| `cluster_smiles.py` | End-to-end: SMILES to clustered parquet |
+| `pipeline/02_assign_clusters.py` | Assign clusters to SMILES with trained models |
 | `benchmark_1B_pipeline.py` | Full pipeline benchmark at billion scale |
 | `benchmark_gpu_predict.py` | GPU vs CPU predict benchmarks |
 | `k_selection_gpu.py` | GPU-accelerated k hyperparameter sweep |

@@ -12,10 +12,15 @@ Stages:
     4. Train PQKMeans clusterer
     5. Process all input data: SMILES → fingerprints → PQ codes → cluster assignments
 
+In this pipeline this is STEP 1 (train): it produces output/models/encoder.joblib
+and output/models/clusterer.joblib from a SAMPLE of the data. (It also assigns
+the sample in its last stage; run_all.sh ignores that - the real assignment of
+all molecules is STEP 2, 02_assign_clusters.py.)
+
 Example
 -------
 # Full pipeline
-python scripts/run_pipeline.py \
+python scripts/pipeline/01_train_models.py \
     --input data/*.smi \
     --output results/ \
     --n-clusters 100000 \
@@ -23,7 +28,7 @@ python scripts/run_pipeline.py \
     --clusterer-training-size 1000000000
 
 # Resume interrupted pipeline
-python scripts/run_pipeline.py \
+python scripts/pipeline/01_train_models.py \
     --input data/*.smi \
     --output results/ \
     --n-clusters 100000 \
@@ -44,7 +49,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 

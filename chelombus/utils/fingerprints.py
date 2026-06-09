@@ -88,25 +88,41 @@ class FingerprintCalculator:
             'mqn': _calculate_mqn_fp,
         }
 
-    def FingerprintFromSmiles(self, smiles:List | str, fp:str, nprocesses:int | None = os.cpu_count(), **params) -> npt.NDArray:
+    def FingerprintFromSmiles(self, smiles:List | str, fp:str, nprocesses:int | None = os.cpu_count(),
+                              return_valid_idx: bool = False, **params):
         """
         Generate fingerprints for a list of SMILES strings in parallel.
 
         The method selects the appropriate fingerprint function based on the 'fp' parameter,
-        binds additional keyword parameters using functools.partial, and then applies the function 
+        binds additional keyword parameters using functools.partial, and then applies the function
         across the SMILES list using multiprocessing.Pool.map.
+
+        Some SMILES may fail to parse; those rows are dropped. By default you get
+        back only the surviving fingerprints, and you cannot tell *which* inputs
+        were dropped - so the result no longer lines up with your SMILES list. If
+        you carry other per-molecule data (an id, the SMILES themselves), pass
+        ``return_valid_idx=True`` to also get the indices of the inputs that
+        survived, and re-align your data with them::
+
+            valid_idx, fps = calc.FingerprintFromSmiles(smiles, "mqn", return_valid_idx=True)
+            ids_ok    = [ids[i] for i in valid_idx]
+            smiles_ok = [smiles[i] for i in valid_idx]
 
         Args:
             smiles_list (list): A list of SMILES strings.
             fp (str): The fingerprint type to compute (e.g., 'morgan').
-            nprocesses (int): Number of processes for multithreaded fingerprint calculation.  Default to cpu cores 
+            nprocesses (int): Number of processes for multithreaded fingerprint calculation.  Default to cpu cores
+            return_valid_idx (bool): If True, return ``(valid_idx, fingerprints)``
+                where ``valid_idx`` is an int64 array of the input positions that
+                parsed OK. If False (default), return only the fingerprints.
             **params: Additional keyword parameters for the fingerprint function.
                 For 'morgan', required keys are:
                     - fpSize (int): Number of bits in the fingerprint.
                     - radius (int): Radius for the Morgan fingerprint.
 
         Returns:
-            npt.NDArray: A NumPy array of fingerprints with shape (number of SMILES, fpSize).
+            npt.NDArray: fingerprints with shape (n_valid, fpSize); or, if
+            ``return_valid_idx`` is True, a tuple ``(valid_idx, fingerprints)``.
 
         Raises:
             ValueError: If an unsupported fingerprint type is requested.
@@ -120,12 +136,19 @@ class FingerprintCalculator:
 
         if isinstance(smiles, str):
             smiles = [smiles]
-        try: 
+        try:
             with Pool(processes=nprocesses) as pool:
                 fingerprints = pool.map(part_func, smiles)
-        finally: 
+        finally:
             pool.close()
             pool.join()
+
+        if return_valid_idx:
+            # Keep the input positions that produced a fingerprint, so the
+            # caller can re-align ids / SMILES that travel with the molecules.
+            valid_idx = [i for i, fp_ in enumerate(fingerprints) if fp_ is not None]
+            fps = np.array([fingerprints[i] for i in valid_idx])
+            return np.asarray(valid_idx, dtype=np.int64), fps
 
         fingerprints = [fp for fp in fingerprints if fp is not None]
 

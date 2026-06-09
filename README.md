@@ -120,9 +120,15 @@ chelombus/
 │   ├── streamer/         # Memory-efficient data streaming
 │   └── utils/            # Fingerprints, visualization, helpers
 ├── scripts/              # Pipeline scripts
+│   └── pipeline/         # ← end-to-end example: SMILES → clusters → TMAP website
 ├── examples/             # Tutorial notebooks
 └── tests/                # Unit tests
 ```
+
+> **Want to run the whole thing end-to-end?** See **[`scripts/pipeline/`](scripts/pipeline/README.md)**.
+> It is a self-contained, numbered, copy-paste example that takes a plain SMILES
+> file all the way to a browsable nested-TMAP website, with a one-command driver
+> (`run_all.sh`) and a plain-English README.
 
 
 ## Choosing k (Number of Clusters)

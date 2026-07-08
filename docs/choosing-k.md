@@ -65,4 +65,4 @@ Fit time scales linearly with both n (number of molecules) and k:
 | 2B molecules, k=100K | ~10.5 days |
 
 !!! note "Memory requirements"
-    PQ codes are (n, 42) uint8 arrays. At 1B molecules this is ~42 GB. Ensure your system has sufficient RAM, or use the `--n-subsample` flag to fit on a representative subset and then assign in chunks.
+    PQ codes are (n, 6) uint8 arrays. At 1B molecules this is ~42 GB. Ensure your system has sufficient RAM, or use the `--n-subsample` flag to fit on a representative subset and then assign in chunks.

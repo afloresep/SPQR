@@ -183,11 +183,15 @@ pytest tests/test_encoder.py -v
 If you use Chelombus in your research, please cite:
 
 ```bibtex
-@article{chelombus2025,
-  title={Nested TMAPs to visualize Billions of Molecules},
+@article{flores2026nested,
+  title={Nested TMAPs to Visualize Billions of Molecules},
   author={Flores Sepulveda, Alejandro and Reymond, Jean-Louis},
-  journal={},
-  year={2025}
+  journal={Journal of Chemical Information and Modeling},
+  volume={66},
+  number={10},
+  pages={5595--5601},
+  year={2026},
+  publisher={ACS Publications}
 }
 ```
 
